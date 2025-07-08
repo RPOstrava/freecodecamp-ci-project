@@ -114,4 +114,3 @@ git commit -m "Add project README"
 git push
 
 This helps me understand the pipeline creation process in Gitlab.
-
