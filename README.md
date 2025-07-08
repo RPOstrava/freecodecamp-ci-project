@@ -1,7 +1,13 @@
-# Git příkazy pro nahrání projektu na GitHub
-## ✅ Step-by-step instructions
+==================================================================
+Git příkazy pro nahrání projektu na GitHub
+==================================================================
 
-### 1. Project Initialization
+Step-by-step instructions
+
+------------------------------------------------------------------
+1. Project Initialization
+------------------------------------------------------------------
+
 cd /d/freecodecamp-gitlab-ci-main      # ujisti se, že jsi v adresáři projektu
 git init                               # pokud jsi to ještě neudělal
 git remote add origin https://github.com/RPOstrava/freecodecamp-ci-project.git  # nastav vzdálený repozitář
@@ -10,106 +16,98 @@ git commit -m "Přidání všech souborů projektu"   # vytvoř commit se zpráv
 git branch -M main                     # přejmenuj větev na main (pokud ještě není)
 git push -u origin main                # nahraj vše na GitHub
 
-### 2. Build setup in `.gitlab-ci.yml`
+
+------------------------------------------------------------------
+2. Build setup in .gitlab-ci.yml
+------------------------------------------------------------------
+
 build website:
-  image: node:16-alpine
-  stage: check
+  image: node:16-alpine                # použijeme Node.js 16 Alpine Linux
+  stage: check                        # fáze build
   script:
-    - yarn install
-    - yarn build
+    - yarn install                   # instalace závislostí
+    - yarn build                    # sestavení projektu
   artifacts:
     paths:
-      - build
+      - build                       # zachování build složky jako artefaktu
 
-# Příkazy pro commit a push změn
-git add .gitlab-ci.yml
-git commit -m "Add build job with artifacts"   # Commit popisující přidání build kroku
-git push
 
-### 3. Check for build output
+------------------------------------------------------------------
+3. Check for build output
+------------------------------------------------------------------
+
 check index.html:
-  image: node:16-alpine
-  stage: check
+  image: node:16-alpine               # Node.js 16 Alpine pro přístup k build složce
+  stage: check                      # také ve fázi check
   dependencies:
-    - build website
+    - build website                 # závislost na build website jobu
   script:
-    - test -f build/index.html
+    - test -f build/index.html      # kontrola, zda soubor existuje
 
-# Příkazy pro commit a push změn
-git add .gitlab-ci.yml
-git commit -m "Add index.html check job"
-git push
 
-### 4. Add unit testing and dependent test jobs
-stages:
-  - check                # fáze kontroly (build, kontrola souborů)
-  - test                 # fáze testování
+------------------------------------------------------------------
+4. Unit testing a další testy
+------------------------------------------------------------------
 
-build website:
-  image: node:16-alpine  # použijeme Node.js 16 na Alpine Linuxu
-  stage: check           # tento job je ve fázi check
+unit tests:
+  image: node:16-alpine              # Node.js 16 Alpine pro testy
+  stage: test                       # fáze testování
   script:
-    - yarn install       # nainstalujeme závislosti
-    - yarn build         # spustíme build projektu (vytvoří složku build)
-  artifacts:
-    paths:
-      - build            # zachováme složku build pro další joby
+    - yarn install                  # nainstaluj závislosti
+    - yarn test                    # spusť unit testy
 
 check index.html:
-  image: node:16-alpine  # opět Node.js 16 Alpine (potřebujeme přístup k build složce)
-  stage: check           # také ve fázi check
+  image: node:16-alpine              # Node.js 16 Alpine pro kontrolu souboru
+  stage: check
   script:
-    - test -f build/index.html   # ověříme, zda existuje build/index.html
+    - test -f build/index.html      # ověř existence build/index.html
   needs:
-    - build website       # tento job čeká na dokončení build website
+    - build website                 # musí být hotový build website
 
 run additional tests:
-  image: node:16-alpine  # Node.js 16 Alpine pro testy
-  stage: test            # fáze testování
+  image: node:16-alpine              # Node.js 16 Alpine pro další testy
+  stage: test
   script:
-    - yarn test          # spustíme testy definované v package.json
+    - yarn test                    # spusť další testy z package.json
   needs:
-    - build website      # závislost na build website
-    - check index.html   # závislost na kontrole index.html
+    - build website
+    - check index.html
 
 run final tests:
-  image: node:16-alpine  # Node.js 16 Alpine i zde
-  stage: test            # stále ve fázi testování
+  image: node:16-alpine              # Node.js 16 Alpine pro finální testy
+  stage: test
   script:
-    - yarn test:final    # spustíme finální testy, které si definujeme
+    - yarn test:final              # spusť finální testy, které si definuješ
   needs:
-    - run additional tests  # tento job závisí na úspěšném dokončení run additional tests
+    - run additional tests          # čeká na úspěšné dokončení run additional tests
 
-# Příkazy pro commit a push změn
+
+------------------------------------------------------------------
+5. Jak pipeline funguje
+------------------------------------------------------------------
+
+- build website: Instaluje závislosti a sestavuje React aplikaci.
+- check index.html: Kontroluje, zda vznikl soubor build/index.html.
+- unit tests: Spouští unit testy pomocí Jest.
+- Další testy jsou závislé na úspěšném dokončení buildu a kontroly.
+- Artefakty (build složka) jsou uchovány a zpřístupněny pro následující joby.
+
+
+------------------------------------------------------------------
+6. Jak spustit jednotlivé kroky ručně (v terminálu)
+------------------------------------------------------------------
+
+# Přidání .gitlab-ci.yml do repozitáře a push s popisem
 git add .gitlab-ci.yml
-git commit -m "Add unit and dependent test jobs"
+git commit -m "Add CI/CD jobs"
 git push
 
----
-
-# GitLab CI/CD Project
-
-This project demonstrates how to build, test, and validate a React application using GitLab CI/CD.
-
-## Steps
-
-1. Clone the repo  
-2. Run `yarn install`  
-3. Use `yarn build` to compile the app  
-4. `.gitlab-ci.yml` defines build, validation, and test jobs  
-
-## GitLab CI/CD Pipeline
-
-- **build website** – Installs dependencies and builds React app.  
-- **check index.html** – Verifies output file exists.  
-- **run additional tests** – Runs unit tests after build and index.html check.  
-- **run final tests** – Runs final test suite after additional tests pass.  
-
-## Artifacts
-
-The `build/` folder is stored as an artifact so subsequent jobs can access compiled files.
-
-# Příkazy pro commit a push README.md
+# Přidání README.md a push
 git add README.md
 git commit -m "Add project README"
 git push
+
+
+==================================================================
+This helps me understand the pipeline creation process in Gitlab.
+==================================================================
